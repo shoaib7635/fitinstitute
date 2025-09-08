@@ -14,8 +14,7 @@ import {
   Trash2,
   User,
   MapPin,
-  Phone,
-  CloudSnow
+  Phone
 } from 'lucide-react';
 import { collection, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import { db } from './firebase'; // Make sure this path is correct

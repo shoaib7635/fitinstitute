@@ -34,51 +34,59 @@ if (!isAdmin) {
 }
 
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!image) return toast.error("Please select an image");
 
-    if (!image) return toast.error("Please select an image");
+  setLoading(true);
 
-    setLoading(true);
+  try {
+    // 1. Upload image to Cloudinary
+    const formData = new FormData();
+    formData.append('file', image);
+    formData.append('upload_preset', 'AddProducts');
+    formData.append('cloud_name', 'dyenuc67w');
 
-    try {
-      const formData = new FormData();
-      formData.append('file', image);
-      formData.append('upload_preset', 'AddProducts');
-      formData.append('cloud_name', 'dyenuc67w');
+    const res = await fetch('https://api.cloudinary.com/v1_1/dyenuc67w/image/upload', {
+      method: 'POST',
+      body: formData,
+    });
 
-      const res = await fetch('https://api.cloudinary.com/v1_1/dyenuc67w/image/upload', {
-        method: 'POST',
-        body: formData,
-      });
+    const data = await res.json();
+    const uploadedImageUrl = data.secure_url;
 
-      const data = await res.json();
-      const uploadedImageUrl = data.secure_url;
-
-      await addDoc(collection(db, 'Products'), {
+    // 2. Send product data to backend
+    const response = await fetch("http://localhost:5000/api/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         title,
         description,
         price: Number(price),
         category,
         imageUrl: uploadedImageUrl,
-        createdAt: serverTimestamp(),
-      });
+      }),
+    });
 
-      toast.success('✅ Product added successfully!');
-
-      // Reset form
-      setTitle('');
-      setDescription('');
-      setPrice('');
-      setCategory('');
+    if (response.ok) {
+      toast.success("✅ Product added successfully!");
+      setTitle("");
+      setDescription("");
+      setPrice("");
+      setCategory("");
       setImage(null);
-    } catch (error) {
-      console.error('Error uploading:', error);
-      toast.error('❌ Error adding product. Please try again.');
-    } finally {
-      setLoading(false);
+    } else {
+      toast.error("❌ Error adding product");
     }
-  };
+
+  } catch (error) {
+    console.error(error);
+    toast.error("❌ Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center">
